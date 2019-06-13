@@ -2,14 +2,44 @@
   import Image from "./Image.svelte";
   import Question from "./Question.svelte";
 
-  $: paths = ["r1.jpg", "r2.jpg", "r3.jpg"];
-  $: quests = ["whaaat?", "why", "why not"];
+  let quests = ["?", "why", "why not"];
+  let paths = [];
   $: state = "question";
   $: index = 0;
-  $: path = paths[~~(index / quests.length)];
+  $: path = paths[~~(index / quest.length)];
   $: quest = quests[index % quests.length];
 
-  function next() {
+  $: fillPaths();
+
+  function fillPaths() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const clear = urlParams.get("clear");
+    if (clear === null) {
+      done();
+    }
+    const id = urlParams.get("index");
+    if (id && parseInt(id)) {
+      index = parseInt(id);
+      paths = JSON.parse(window.localStorage.getItem("paths") | "[]");
+      return;
+    }
+
+    const totalLength = 10;
+    const pickNumber = 6;
+    const temp = [];
+    while (temp.length < pickNumber) {
+      const t = ~~(Math.random() * totalLength);
+      if (!temp.includes(t)) {
+        temp.push(t);
+      }
+    }
+
+    paths = temp
+      .flatMap(n => [`Desite (${n + 1})`, `Maps (${n + 1})`, `DB (${n + 1})`])
+      .map(n => `images/${n}.jpg`);
+  }
+
+  function next(selection) {
     switch (state) {
       case "question":
         state = "image";
@@ -18,13 +48,53 @@
       case "image":
         state = "clear";
         index += 1;
-        setTimeout(next, 1500);
+
+        post({
+          questionIndex: index,
+          task: { image: path, question: quest },
+          ...selection.detail
+        });
+
+        pushState();
+
+        if (index >= paths.length * quests.length) {
+          done();
+        }
+
+        setTimeout(next, 200);
         break;
 
       default:
         state = "question";
         break;
     }
+  }
+
+  function post(json) {
+    const xhr = new XMLHttpRequest();
+    const url = document.location.origin + "/record";
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 201) {
+        console.log("successful post");
+      }
+    };
+    xhr.send(JSON.stringify(json));
+  }
+
+  function pushState() {
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("index", index);
+    const newRelativePathQuery =
+      window.location.pathname + "?" + searchParams.toString();
+    history.pushState(null, "", newRelativePathQuery);
+  }
+
+  function done() {
+    window.localStorage.clear();
+    index = 0;
+    pushState();
   }
 </script>
 
@@ -39,5 +109,5 @@
 {:else if state === 'image'}
   <Image imgSrc={path} on:next={next} question={quest} />
 {:else}
-  <div class="white"></div>
+  <div class="white" />
 {/if}

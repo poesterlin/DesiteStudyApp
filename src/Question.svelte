@@ -8,7 +8,6 @@
   }
 </script>
 
-
 <style>
   b {
     display: block;

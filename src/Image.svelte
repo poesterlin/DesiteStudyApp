@@ -8,15 +8,24 @@
   $: x = 0;
   $: y = 0;
   $: show = false;
+  $: timestamp = Date.now();
+  let selectStamp = 0;
+
+  $: resetTime(imgSrc);
+
+  function resetTime() {
+    timestamp = Date.now();
+  }
 
   function track(event) {
     x = event.pageX;
     y = event.pageY;
     show = true;
+    selectStamp = timestamp;
   }
 
   function next() {
-    dispatch("next");
+    dispatch("next", { location: { x, y }, timing: Date.now() - selectStamp });
   }
 </script>
 
@@ -40,6 +49,12 @@
     background: #ff0000d4;
     border-radius: 50%;
     box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.31);
+  }
+
+  b {
+    width: 50px;
+    margin: auto;
+    display: block;
   }
 </style>
 
