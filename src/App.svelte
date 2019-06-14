@@ -2,11 +2,16 @@
   import Image from "./Image.svelte";
   import Question from "./Question.svelte";
 
-  let quests = ["?", "why", "why not"];
+  let quests = [
+    "Mit welcher Route kommen Sie am schnellsten ans Ziel?",
+    "Mit welcher Route müssen Sie am wenigsten Umsteigen?",
+    "Mit welcher Route müssen Sie am wenigsten Laufen?",
+    ""
+  ];
   let paths = [];
   $: state = "question";
   $: index = 0;
-  $: path = paths[~~(index / quest.length)];
+  $: path = paths[Math.floor(index / quest.length)];
   $: quest = quests[index % quests.length];
 
   $: fillPaths();
@@ -34,9 +39,33 @@
       }
     }
 
-    paths = temp
-      .flatMap(n => [`Desite (${n + 1})`, `Maps (${n + 1})`, `DB (${n + 1})`])
-      .map(n => `images/${n}.jpg`);
+    paths = shuffle(
+      temp
+        .flatMap(n => [`Desite (${n + 1})`, `Maps (${n + 1})`, `DB (${n + 1})`])
+        .map(n => `images/${n}.jpg`)
+    );
+
+    window.localStorage.setItem("paths", JSON.stringify(paths));
+  }
+
+  function shuffle(array) {
+    var currentIndex = array.length,
+      temporaryValue,
+      randomIndex;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+
+      // And swap it with the current element.
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
+    }
+
+    return array;
   }
 
   function next(selection) {
@@ -77,7 +106,7 @@
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4 && xhr.status === 201) {
-        console.log("successful post");
+        console.log("successful post", json);
       }
     };
     xhr.send(JSON.stringify(json));

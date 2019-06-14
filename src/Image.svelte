@@ -21,11 +21,19 @@
     x = event.pageX;
     y = event.pageY;
     show = true;
-    selectStamp = timestamp;
+    selectStamp = Date.now();
   }
 
-  function next() {
-    dispatch("next", { location: { x, y }, timing: Date.now() - selectStamp });
+  function next(multiple, inconclusive) {
+    if (multiple || inconclusive) {
+      selectStamp = Date.now();
+    }
+    dispatch("next", {
+      multiple,
+      inconclusive,
+      location: { x, y },
+      timing: selectStamp - timestamp
+    });
   }
 </script>
 
@@ -34,14 +42,14 @@
     margin: auto;
     display: block;
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: 90vh;
     object-fit: contain;
     width: 100vw;
     height: 100vh;
   }
 
   div {
-    --size: 48px;
+    --size: 35px;
     position: absolute;
     width: var(--size);
     height: var(--size);
@@ -52,14 +60,24 @@
   }
 
   b {
-    width: 50px;
+    width: 50vw;
     margin: auto;
+    display: block;
+  }
+
+  button {
+    margin: 10px auto;
     display: block;
   }
 </style>
 
 <b>{question}</b>
+<button on:click={() => next(true, false)}>Mehrere Antworten möglich</button>
+<button on:click={() => next(false, true)}>keine Antwort</button>
 <img src={imgSrc} on:click={track} alt="" />
 {#if show}
-  <div class="pointer" on:click={next} style="top: {y}px; left: {x}px;" />
+  <div
+    class="pointer"
+    on:click={() => next(false, false)}
+    style="top: {y}px; left: {x}px;" />
 {/if}
