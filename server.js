@@ -45,4 +45,15 @@ app.get('/results', async (_, res) => {
     res.json(results);
 })
 
+
+app.get('/delete/all/for/sure', async (_, res) => {
+    const results = await DB.find();
+
+    for (const res of results) {
+        await res.remove();
+    }
+
+    res.status(201).send(`${results.length} results deleted`);
+});
+
 app.listen(3001);

@@ -15,6 +15,7 @@
     height: 50vh;
     padding-top: 50vh;
     text-align: center;
+    font-size: 150%;
   }
 </style>
 

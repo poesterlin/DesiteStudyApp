@@ -3,15 +3,15 @@
   import Question from "./Question.svelte";
 
   let quests = [
-    "Mit welcher Route kommen Sie am schnellsten ans Ziel?",
+    "Mit welcher Route kommen Sie als erstes ans Ziel?",
     "Mit welcher Route müssen Sie am wenigsten Umsteigen?",
     "Mit welcher Route müssen Sie am wenigsten Laufen?",
-    ""
+    "Welche Route braucht am wenigsten Zeit?"
   ];
-  let paths = [];
+  $: paths = [];
   $: state = "question";
   $: index = 0;
-  $: path = paths[Math.floor(index / quest.length)];
+  $: path = paths[index];
   $: quest = quests[index % quests.length];
 
   $: fillPaths();
@@ -19,31 +19,28 @@
   function fillPaths() {
     const urlParams = new URLSearchParams(window.location.search);
     const clear = urlParams.get("clear");
-    if (clear === null) {
+    if (clear === "true") {
       done();
     }
     const id = urlParams.get("index");
     if (id && parseInt(id)) {
       index = parseInt(id);
-      paths = JSON.parse(window.localStorage.getItem("paths") | "[]");
-      return;
-    }
-
-    const totalLength = 10;
-    const pickNumber = 6;
-    const temp = [];
-    while (temp.length < pickNumber) {
-      const t = ~~(Math.random() * totalLength);
-      if (!temp.includes(t)) {
-        temp.push(t);
+      paths = JSON.parse(window.localStorage.getItem("paths"));
+      if (paths && paths.length > 10) {
+        return;
       }
     }
 
-    paths = shuffle(
-      temp
-        .flatMap(n => [`Desite (${n + 1})`, `Maps (${n + 1})`, `DB (${n + 1})`])
-        .map(n => `images/${n}.jpg`)
+    const temp = new Array(6)
+      .fill(null)
+      .map((_, i) => i)
+      .flatMap(n => [`Desite (${n + 1})`, `Maps (${n + 1})`, `DB (${n + 1})`])
+      .map(n => `images/${n}.jpg`);
+
+    paths = shuffle(temp).flatMap(n =>
+      new Array(quests.length).fill(null).map(() => n)
     );
+    console.log(paths);
 
     window.localStorage.setItem("paths", JSON.stringify(paths));
   }
@@ -86,8 +83,10 @@
 
         pushState();
 
-        if (index >= paths.length * quests.length) {
+        if (!path) {
           done();
+          alert("test is done");
+          fillPaths();
         }
 
         setTimeout(next, 200);
@@ -130,6 +129,8 @@
 <style>
   :global(body) {
     padding: 0;
+    user-select: none;
+    overflow: hidden;
   }
 </style>
 

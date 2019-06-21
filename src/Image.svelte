@@ -39,17 +39,17 @@
 
 <style>
   img {
-    margin: auto;
+    margin: 5px auto 0;
     display: block;
-    max-width: 100vw;
-    max-height: 90vh;
+    max-width: 90vw;
+    max-height: 80vh;
     object-fit: contain;
     width: 100vw;
     height: 100vh;
   }
 
-  div {
-    --size: 35px;
+  div.pointer {
+    --size: 48px;
     position: absolute;
     width: var(--size);
     height: var(--size);
@@ -60,20 +60,30 @@
   }
 
   b {
-    width: 50vw;
-    margin: auto;
+    width: 60vw;
+    margin: 10px auto 0;
     display: block;
+    font-size: 140%;
+  }
+
+  .buttons {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
   }
 
   button {
-    margin: 10px auto;
-    display: block;
+    margin: 10px 10px 0;
+    flex: 1 1 50%;
+    max-width: 50%;
   }
 </style>
 
 <b>{question}</b>
-<button on:click={() => next(true, false)}>Mehrere Antworten möglich</button>
-<button on:click={() => next(false, true)}>keine Antwort</button>
+<div class="buttons">
+  <button on:click={() => next(true, false)}>Mehrere Antworten möglich</button>
+  <button on:click={() => next(false, true)}>keine Antwort</button>
+</div>
 <img src={imgSrc} on:click={track} alt="" />
 {#if show}
   <div
