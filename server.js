@@ -20,9 +20,11 @@ process.on('SIGINT', async () => {
 });
 
 
+// @ts-ignore
 let dbSchema = mongoose.Schema({
     data: Object,
-    timestamp: String
+    timestamp: String,
+    flag: { type: Boolean, default: true },
 });
 
 let DB = mongoose.model("tests", dbSchema);
@@ -54,6 +56,14 @@ app.get('/delete/all/for/sure', async (_, res) => {
     }
 
     res.status(201).send(`${results.length} results deleted`);
+});
+
+
+app.post('/flag', async (req, res) => {
+    const entry = await DB.findById(req.body.id);
+    entry.flag = req.body.flag;
+    await entry.save();
+    res.status(200).send();
 });
 
 app.listen(3001);
