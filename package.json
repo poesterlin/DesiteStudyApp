@@ -5,12 +5,13 @@
     "build": "rollup -c",
     "autobuild": "rollup -c -w",
     "dev": "run-p server autobuild",
-    "server":"nodemon server.js",
+    "server": "nodemon server.js",
     "start": "npm run dev",
     "start:dev": "sirv public --dev"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
+    "chart.js": "^2.8.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "mongoose": "^5.0.6"

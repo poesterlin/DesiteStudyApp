@@ -8,8 +8,10 @@
   $: studyData = [];
   $: imgIdx = 0;
   $: qIdx = 0;
+  $: current = [];
   $: filtered = [];
-
+  $: skipped = () => current.filter(r => r.data.inconclusive);
+  $: multiple = () => current.filter(r => r.data.multiple);
   onMount(() => getstudyData());
 
   function getstudyData() {
@@ -42,9 +44,11 @@
   }
 
   function filterRes() {
-    filtered = studyData
+    current = studyData
       .filter(r => r.data.task.image === paths[imgIdx])
       .filter(r => r.data.task.question === quests[qIdx]);
+
+    filtered = current.filter(r => r.data.location.x > 0);
   }
 
   function next() {
@@ -63,9 +67,9 @@
     filterRes();
   }
 
-  function flag(id, flag) {
+  function flag(id, toggle) {
     const res = studyData.find(res => res._id === id);
-    res.flag = !res.flag;
+    res.flag = toggle ? !res.flag : false;
     post({ id, flag: res.flag });
     filterRes();
   }
@@ -87,6 +91,12 @@
     imgIdx = 0;
     qIdx = 0;
     alert("done");
+  }
+  function flagSkipped() {
+    skipped().forEach(el => flag(el._id));
+  }
+  function flagMultiple() {
+    multiple().forEach(el => flag(el._id));
   }
 </script>
 
@@ -111,7 +121,7 @@
     height: 100vh;
   }
 
-  div {
+  div.header {
     display: flex;
     flex-flow: row wrap;
     margin: auto;
@@ -129,9 +139,19 @@
 </style>
 
 {#if paths[imgIdx] && quests[qIdx]}
-  <div>
+  <div class="header">
     <b>{quests[qIdx]}</b>
     <button on:click={next}>next</button>
+    <div>
+      <div>
+         {skipped().length} skipped
+        <button on:click={flagSkipped}>flag</button>
+      </div>
+      <div>
+         {multiple().length} multiple
+        <button on:click={flagMultiple}>flag</button>
+      </div>
+    </div>
   </div>
   <img src={paths[imgIdx]} alt="" />
 
@@ -140,7 +160,7 @@
       class="pointer"
       style="background: {res.flag ? 'green' : 'red'}; top: {res.data.location.y}px;
       left: {res.data.location.x}px; "
-      on:click={() => flag(res._id, res.flag)} />
+      on:click={() => flag(res._id, true)} />
   {/each}
 
 {:else}
