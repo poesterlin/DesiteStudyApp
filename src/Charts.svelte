@@ -26,15 +26,17 @@
         datasets: [
           {
             label: "time by visualization type",
-            data: groups.map(g => avg(g.map(d => d.data.timing)))
+            data: groups.map(g =>
+              avg(g.filter(d => d.flag).map(d => d.data.timing))
+            )
           },
           {
             label: "wrong by visualization type",
             data: groups.map(g =>
               sum(g.filter(d => !d.flag).map(f => (f ? 1 : 0)))
             ),
-            backgroundColor: 'red',
-            borderColor: 'red',
+            backgroundColor: "red",
+            borderColor: "red"
           }
         ]
       },

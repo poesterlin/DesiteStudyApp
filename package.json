@@ -14,7 +14,9 @@
     "chart.js": "^2.8.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "mongoose": "^5.0.6"
+    "mongoose": "^5.0.6",
+    "crayon": "^2.0.6",
+    "crayon-svelte": "^1.0.1"
   },
   "devDependencies": {
     "nodemon": "^1.19.1",
