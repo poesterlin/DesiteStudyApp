@@ -2,14 +2,25 @@
   import { onMount } from "svelte";
   import Chart from "chart.js";
 
+  $: data = [];
+
   onMount(() => getstudyData());
 
   async function getstudyData() {
     const request = await fetch(document.location.origin + "/results");
     const response = await request.json();
 
-    const data = (await response).filter(r => r.data.task && r.data.task.image);
+    data = (await response).filter(r => r.data.task && r.data.task.image);
     create(data);
+  }
+
+  function setComplexity(event) {
+    const c = parseInt(event.target.value);
+    if (c && !isNaN(c) && c <= 3 && c >= 1) {
+      create(data.filter(el => getComplexity(el) === c));
+    } else {
+      create(data);
+    }
   }
 
   function create(data) {
@@ -17,10 +28,14 @@
     const ctx2 = document.getElementById("chart2");
     const ctx3 = document.getElementById("chart3");
 
-    const groups = group(data, getType);
+    const groups = group(data, getType).sort((a, b) =>
+      alphabetical(getType(a[0]), getType(b[0]))
+    );
 
     const questionGroups = groups.map(g =>
-      group(g, el => el.data.task.question)
+      group(g, el => el.data.task.question).sort((a, b) =>
+        alphabetical(getQuestion(a[0]), getQuestion(b[0]))
+      )
     );
 
     const options = {
@@ -126,7 +141,11 @@
   }
 
   function getQuestion(el) {
-    return el.data.task.question;
+    if (el) {
+      return el.data.task.question;
+    } else {
+      return "";
+    }
   }
 
   function getColor(el) {
@@ -139,6 +158,30 @@
       case "DB":
         return "rgba(190, 0, 0, 0.5)";
     }
+  }
+
+  function getComplexity(el) {
+    const img = el.data.task.image;
+    const f = img.indexOf(" (");
+    const scenario = parseInt(img[f + 2]);
+    switch (scenario) {
+      case 1:
+        return 3;
+      case 2:
+        return 2;
+      case 3:
+        return 1;
+      case 4:
+        return 3;
+      case 5:
+        return 1;
+      case 6:
+        return 2;
+    }
+  }
+
+  function alphabetical(a, b) {
+    return ("" + a).localeCompare(b);
   }
 
   function group(data, fn) {
@@ -165,13 +208,17 @@
   :global(body) {
     overflow: auto;
   }
-  div {
+  .chart-container {
     display: block;
     height: 100vh;
     width: 90vw;
   }
 </style>
 
+<div>
+  <span>Complexity:</span>
+  <input type="number" on:change={c => setComplexity(c)} />
+</div>
 Timing:
 <div class="chart-container">
   <canvas id="chart" />
