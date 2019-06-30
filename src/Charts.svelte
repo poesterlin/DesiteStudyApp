@@ -15,10 +15,9 @@
   function create(data) {
     const ctx = document.getElementById("chart");
     const ctx2 = document.getElementById("chart2");
+    const ctx3 = document.getElementById("chart3");
 
-    const modifier = getType;
-
-    const groups = group(data, modifier);
+    const groups = group(data, getType);
 
     const questionGroups = groups.map(g =>
       group(g, el => el.data.task.question)
@@ -61,7 +60,7 @@
       options
     });
 
-    const c = new Chart(ctx2, {
+    new Chart(ctx2, {
       type: "bar",
       data: {
         labels: questionGroups[0].map((vis, i) => getQuestion(vis[i])),
@@ -71,6 +70,48 @@
             data: questions.map(q => sum(q.filter(f => !f.flag).map(() => 1))),
             backgroundColor: getColor(questions[0][0]),
             borderColor: getColor(questions[0][0])
+          };
+        })
+      },
+      options
+    });
+
+    new Chart(ctx2, {
+      type: "bar",
+      data: {
+        labels: questionGroups[0].map((vis, i) => getQuestion(vis[i])),
+        datasets: questionGroups.map(questions => {
+          return {
+            label: getType(questions[0][0]),
+            data: questions.map(q => sum(q.filter(f => !f.flag).map(() => 1))),
+            backgroundColor: getColor(questions[0][0]),
+            borderColor: getColor(questions[0][0])
+          };
+        })
+      },
+      options
+    });
+
+    new Chart(ctx3, {
+      type: "line",
+      data: {
+        labels: new Array(
+          Math.max(
+            ...groups[0].map(el =>
+              Math.floor(el.data.questionIndex / 4).toString()
+            )
+          )
+        )
+          .fill(null)
+          .map((_, i) => i),
+        datasets: groups.map(g => {
+          return {
+            label: getType(g[0]),
+            data: group(g, g =>
+              Math.floor(g.data.questionIndex / 4).toString()
+            ).map(a => avg(a.map(a => a.data.timing))),
+            backgroundColor: getColor(g[0]),
+            borderColor: getColor(g[0])
           };
         })
       },
@@ -92,11 +133,11 @@
     const type = getType(el);
     switch (type) {
       case "Desite":
-        return "lightblue";
+        return "rgba(0, 0, 190, 0.5)";
       case "Maps":
-        return "green";
+        return "rgba(0, 190, 0, 0.5)";
       case "DB":
-        return "red";
+        return "rgba(190, 0, 0, 0.5)";
     }
   }
 
@@ -110,7 +151,7 @@
   }
 
   function avg(data) {
-    return sum(data) / data.length;
+    return ~~(sum(data) / data.length);
   }
   function sum(data) {
     if (!Array.isArray(data) || data.length === 0 || Array.isArray(data[0])) {
@@ -126,7 +167,7 @@
   }
   div {
     display: block;
-    height: 80vh;
+    height: 100vh;
     width: 90vw;
   }
 </style>
@@ -138,4 +179,8 @@ Timing:
 Errors:
 <div class="chart-container">
   <canvas id="chart2" />
+</div>
+Learning:
+<div class="chart-container">
+  <canvas id="chart3" />
 </div>
