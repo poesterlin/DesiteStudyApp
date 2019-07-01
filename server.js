@@ -44,7 +44,13 @@ app.post('/record', async (req, res) => {
 
 app.get('/results', async (_, res) => {
     const results = await DB.find();
-    res.json(results);
+    res.json(results.map(r => {
+        if (r.data.skipped || r.data.inconclusive || r.data.multiple) {
+            console.log('wrong')
+            r.data.location = { x: 0, y: 0 };
+        }
+        return r;
+    }));
 })
 
 

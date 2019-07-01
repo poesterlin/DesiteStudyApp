@@ -48,7 +48,23 @@
       .filter(r => r.data.task.image === paths[imgIdx])
       .filter(r => r.data.task.question === quests[qIdx]);
 
-    filtered = current.filter(r => r.data.location.x > 0);
+    filtered = current
+      .map(r => {
+        if (r.data.skipped || r.data.multiple) {
+          r.data.location = { x: 0, y: 0 };
+        }
+        return r;
+      })
+      .filter(r => r.data.location.x > 0 && validComplexity(r));
+
+    console.log(filtered);
+  }
+
+  function validComplexity(el) {
+    const img = el.data.task.image;
+    const f = img.indexOf(" (");
+    const scenario = parseInt(img[f + 2]);
+    return scenario <= 6;
   }
 
   function next() {
@@ -158,7 +174,7 @@
   {#each filtered as res}
     <div
       class="pointer"
-      style="background: {res.flag ? 'green' : 'red'}; top: {res.data.location.y}px;
+      style="background: {res.flag ? 'green' : 'red'}; top: {res.data.location.y + 100}px;
       left: {res.data.location.x}px; "
       on:click={() => flag(res._id, true)} />
   {/each}
