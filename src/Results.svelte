@@ -18,7 +18,9 @@
     fetch(document.location.origin + "/results")
       .then(response => response.json())
       .then(data => {
-        data = data.filter(r => r.data.task && r.data.task.image);
+        data = data
+          .filter(r => r.data.task && r.data.task.image)
+          .filter(r => validComplexity(r));
         studyData = data;
         const images = {};
         data.forEach(element => {
@@ -55,15 +57,14 @@
         }
         return r;
       })
-      .filter(r => r.data.location.x > 0 && validComplexity(r));
-
-    console.log(filtered);
+      .filter(r => r.data.location.x > 0);
   }
 
   function validComplexity(el) {
     const img = el.data.task.image;
-    const f = img.indexOf(" (");
-    const scenario = parseInt(img[f + 2]);
+    const start = img.indexOf("(");
+    const stop = img.indexOf(")");
+    const scenario = parseInt(img.substr(start + 1, stop - start - 1));
     return scenario <= 6;
   }
 

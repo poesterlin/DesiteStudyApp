@@ -10,7 +10,9 @@
     const request = await fetch(document.location.origin + "/results");
     const response = await request.json();
 
-    data = (await response).filter(r => r.data.task && r.data.task.image);
+    data = (await response)
+      .filter(r => r.data.task && r.data.task.image)
+      .filter(getComplexity);
     create(data);
   }
 
@@ -162,8 +164,9 @@
 
   function getComplexity(el) {
     const img = el.data.task.image;
-    const f = img.indexOf(" (");
-    const scenario = parseInt(img[f + 2]);
+    const start = img.indexOf("(");
+    const stop = img.indexOf(")");
+    const scenario = parseInt(img.substr(start + 1, stop - start - 1));
     switch (scenario) {
       case 1:
         return 3;
