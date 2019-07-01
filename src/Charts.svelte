@@ -62,13 +62,22 @@
     new Chart(ctx, {
       type: "bar",
       data: {
-        labels: questionGroups[0].map((vis, i) => getQuestion(vis[i])),
+        labels: questionGroups[0]
+          .map((vis, i) => getQuestion(vis[i]))
+          .concat(["total"]),
         datasets: questionGroups.map(questions => {
           return {
             label: getType(questions[0][0]),
-            data: questions.map(q =>
-              avg(q.filter(f => f.flag).map(f => f.data.timing))
-            ),
+            data: questions
+              .map(q => avg(q.filter(f => f.flag).map(f => f.data.timing)))
+              .concat(
+                avg(
+                  questions
+                    .flat()
+                    .filter(f => f.flag)
+                    .map(f => f.data.timing)
+                )
+              ),
             backgroundColor: getColor(questions[0][0]),
             borderColor: getColor(questions[0][0])
           };
@@ -80,27 +89,22 @@
     new Chart(ctx2, {
       type: "bar",
       data: {
-        labels: questionGroups[0].map((vis, i) => getQuestion(vis[i])),
+        labels: questionGroups[0]
+          .map((vis, i) => getQuestion(vis[i]))
+          .concat(["total"]),
         datasets: questionGroups.map(questions => {
           return {
             label: getType(questions[0][0]),
-            data: questions.map(q => sum(q.filter(f => !f.flag).map(() => 1))),
-            backgroundColor: getColor(questions[0][0]),
-            borderColor: getColor(questions[0][0])
-          };
-        })
-      },
-      options
-    });
-
-    new Chart(ctx2, {
-      type: "bar",
-      data: {
-        labels: questionGroups[0].map((vis, i) => getQuestion(vis[i])),
-        datasets: questionGroups.map(questions => {
-          return {
-            label: getType(questions[0][0]),
-            data: questions.map(q => sum(q.filter(f => !f.flag).map(() => 1))),
+            data: questions
+              .map(q => sum(q.filter(f => !f.flag).map(() => 1)))
+              .concat(
+                sum(
+                  questions
+                    .flat()
+                    .filter(f => !f.flag)
+                    .map(() => 1)
+                )
+              ),
             backgroundColor: getColor(questions[0][0]),
             borderColor: getColor(questions[0][0])
           };
@@ -120,17 +124,27 @@
           )
         )
           .fill(null)
-          .map((_, i) => i),
-        datasets: groups.map(g => {
-          return {
-            label: getType(g[0]),
-            data: group(g, g =>
-              Math.floor(g.data.questionIndex / 4).toString()
-            ).map(a => avg(a.map(a => a.data.timing))),
-            backgroundColor: getColor(g[0]),
-            borderColor: getColor(g[0])
-          };
-        })
+          .map((_, i) => i)
+          .concat(["total"]),
+        datasets: groups
+          .map(g => {
+            return {
+              label: getType(g[0]),
+              data: group(g, g =>
+                Math.floor(g.data.questionIndex / 4).toString()
+              ).map(a => avg(a.map(a => a.data.timing))),
+              backgroundColor: getColor(g[0]),
+              borderColor: getColor(g[0])
+            };
+          })
+          .concat([
+            {
+              label: "total",
+              data: group(data, g =>
+                Math.floor(g.data.questionIndex / 4).toString()
+              ).map(a => avg(a.map(a => a.data.timing)))
+            }
+          ])
       },
       options
     });
