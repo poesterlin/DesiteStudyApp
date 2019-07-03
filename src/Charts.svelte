@@ -3,8 +3,14 @@
   import Chart from "chart.js";
 
   $: data = [];
+  $: percentile = 70;
 
-  onMount(() => getstudyData());
+  let c1, c2, c3;
+
+  onMount(() => {
+    updateCharts();
+    getstudyData();
+  });
 
   async function getstudyData() {
     const request = await fetch(document.location.origin + "/results");
@@ -13,32 +19,27 @@
     data = (await response)
       .filter(r => r.data.task && r.data.task.image)
       .filter(getComplexity);
-    create(data);
+    update(data);
   }
 
   function setComplexity(event) {
     const c = parseInt(event.target.value);
     if (c && !isNaN(c) && c <= 3 && c >= 1) {
-      create(data.filter(el => getComplexity(el) === c));
+      update(data.filter(el => getComplexity(el) === c));
     } else {
-      create(data);
+      update(data);
     }
   }
 
-  function create(data) {
-    const ctx = document.getElementById("chart");
+  function filterPercentile(group, p, fn) {
+    const cut = (p / 100) * group.length;
+    return group.sort(fn).filter((_, idx) => idx < cut);
+  }
+
+  function updateCharts() {
+    const ctx1 = document.getElementById("chart");
     const ctx2 = document.getElementById("chart2");
     const ctx3 = document.getElementById("chart3");
-
-    const groups = group(data, getType).sort((a, b) =>
-      alphabetical(getType(a[0]), getType(b[0]))
-    );
-
-    const questionGroups = groups.map(g =>
-      group(g, el => el.data.task.question).sort((a, b) =>
-        alphabetical(getQuestion(a[0]), getQuestion(b[0]))
-      )
-    );
 
     const options = {
       scales: {
@@ -59,95 +60,109 @@
       }
     };
 
-    new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: questionGroups[0]
-          .map((vis, i) => getQuestion(vis[i]))
-          .concat(["total"]),
-        datasets: questionGroups.map(questions => {
-          return {
-            label: getType(questions[0][0]),
-            data: questions
-              .map(q => avg(q.filter(f => f.flag).map(f => f.data.timing)))
-              .concat(
-                avg(
-                  questions
-                    .flat()
-                    .filter(f => f.flag)
-                    .map(f => f.data.timing)
-                )
-              ),
-            backgroundColor: getColor(questions[0][0]),
-            borderColor: getColor(questions[0][0])
-          };
-        })
-      },
-      options
-    });
+    c1 = new Chart(ctx1, { data: {}, type: "bar", options });
+    c2 = new Chart(ctx2, { data: {}, type: "bar", options });
+    c3 = new Chart(ctx3, { data: {}, type: "line", options });
+  }
 
-    new Chart(ctx2, {
-      type: "bar",
-      data: {
-        labels: questionGroups[0]
-          .map((vis, i) => getQuestion(vis[i]))
-          .concat(["total"]),
-        datasets: questionGroups.map(questions => {
-          return {
-            label: getType(questions[0][0]),
-            data: questions
-              .map(q => sum(q.filter(f => !f.flag).map(() => 1)))
-              .concat(
-                sum(
-                  questions
-                    .flat()
-                    .filter(f => !f.flag)
-                    .map(() => 1)
-                )
-              ),
-            backgroundColor: getColor(questions[0][0]),
-            borderColor: getColor(questions[0][0])
-          };
-        })
-      },
-      options
-    });
+  function update(data) {
+    const groups = group(data, getType)
+      .map(g =>
+        filterPercentile(
+          g,
+          percentile,
+          (a1, a2) => a1.data.timing - a2.data.timing
+        )
+      )
+      .sort((a, b) => alphabetical(getType(a[0]), getType(b[0])));
 
-    new Chart(ctx3, {
-      type: "line",
-      data: {
-        labels: new Array(
-          Math.max(
-            ...groups[0].map(el =>
-              Math.floor(el.data.questionIndex / 4).toString()
-            )
+    const questionGroups = groups.map(g =>
+      group(g, el => el.data.task.question).sort((a, b) =>
+        alphabetical(getQuestion(a[0]), getQuestion(b[0]))
+      )
+    );
+
+    c1.data = {
+      labels: questionGroups[0]
+        .map((vis, i) => getQuestion(vis[i]))
+        .concat(["total"]),
+      datasets: questionGroups.map(questions => {
+        return {
+          label: getType(questions[0][0]),
+          data: questions
+            .map(q => avg(q.filter(f => f.flag).map(f => f.data.timing)))
+            .concat(
+              avg(
+                questions
+                  .flat()
+                  .filter(f => f.flag)
+                  .map(f => f.data.timing)
+              )
+            ),
+          backgroundColor: getColor(questions[0][0]),
+          borderColor: getColor(questions[0][0])
+        };
+      })
+    };
+
+    c2.data = {
+      labels: questionGroups[0]
+        .map((vis, i) => getQuestion(vis[i]))
+        .concat(["total"]),
+      datasets: questionGroups.map(questions => {
+        return {
+          label: getType(questions[0][0]),
+          data: questions
+            .map(q => sum(q.filter(f => !f.flag).map(() => 1)))
+            .concat(
+              sum(
+                questions
+                  .flat()
+                  .filter(f => !f.flag)
+                  .map(() => 1)
+              )
+            ),
+          backgroundColor: getColor(questions[0][0]),
+          borderColor: getColor(questions[0][0])
+        };
+      })
+    };
+
+    c3.data = {
+      labels: new Array(
+        Math.max(
+          ...groups[0].map(el =>
+            Math.floor(el.data.questionIndex / 4).toString()
           )
         )
-          .fill(null)
-          .map((_, i) => i)
-          .concat(["total"]),
-        datasets: groups
-          .map(g => {
-            return {
-              label: getType(g[0]),
-              data: group(g, g =>
-                Math.floor(g.data.questionIndex / 4).toString()
-              ).map(a => avg(a.map(a => a.data.timing))),
-              backgroundColor: getColor(g[0]),
-              borderColor: getColor(g[0])
-            };
-          })
-          .concat([
-            {
-              label: "total",
-              data: group(data, g =>
-                Math.floor(g.data.questionIndex / 4).toString()
-              ).map(a => avg(a.map(a => a.data.timing)))
-            }
-          ])
-      },
-      options
-    });
+      )
+        .fill(null)
+        .map((_, i) => i)
+        .concat(["total"]),
+      datasets: groups
+        .map(g => {
+          return {
+            label: getType(g[0]),
+            data: group(g, g =>
+              Math.floor(g.data.questionIndex / 4).toString()
+            ).map(a => avg(a.map(a => a.data.timing))),
+            backgroundColor: getColor(g[0]),
+            borderColor: getColor(g[0])
+          };
+        })
+        .concat([
+          {
+            label: "total",
+            data: group(data, g =>
+              Math.floor(g.data.questionIndex / 4).toString()
+            ).map(a => avg(a.map(a => a.data.timing)))
+          }
+        ])
+    };
+
+    c1.update();
+    c2.update();
+    c3.update();
   }
 
   function getType(el) {
@@ -235,6 +250,8 @@
 <div>
   <span>Complexity:</span>
   <input type="number" on:change={c => setComplexity(c)} />
+  <span>percentile:</span>
+  <input type="number" bind:value={percentile} on:change={() => update(data)} />
 </div>
 Timing:
 <div class="chart-container">
